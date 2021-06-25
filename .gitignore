@@ -1,3 +1,8 @@
+.DS_Store
+.vscode/
+artifacts/
+cache/
+
 # Logs
 logs
 *.log
