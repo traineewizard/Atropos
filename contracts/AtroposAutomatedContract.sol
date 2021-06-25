@@ -21,7 +21,6 @@ contract AtroposAutomatedContract is
     bytes32 private _jobId;
     address private _oracle;
     uint256 private _fee;
-    address public _receiver;
     string public _getRequest;
     string public _path;
     uint256 public _expectedResult;
@@ -40,7 +39,6 @@ contract AtroposAutomatedContract is
         bytes32 jobId,
         address oracle,
         uint256 fee,
-        address receiver,
         string memory getRequest,
         string memory path,
         uint256 expectedResult
@@ -56,7 +54,6 @@ contract AtroposAutomatedContract is
         _jobId = jobId;
         _oracle = oracle;
         _fee = fee;
-        _receiver = receiver;
         _getRequest = getRequest;
         _path = path;
         _expectedResult = expectedResult;
@@ -86,13 +83,7 @@ contract AtroposAutomatedContract is
         ++_jobTriggers;
         if (_jobExpectedTriggers > 0 && _jobTriggers >= _jobExpectedTriggers)
             return;
-        _atroposExecutor.execute(
-            _receiver,
-            _documentKey,
-            _getRequest,
-            _path,
-            result
-        );
+        _atroposExecutor.execute();
     }
 
     function checkUpkeep(bytes calldata checkData)
