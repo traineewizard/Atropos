@@ -5,10 +5,12 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "./external/KeeperCompatibleInterface.sol";
 import "./IAtroposAutomatedContractExecutor.sol";
+import "./IAtroposAutomatedContract.sol";
 
 contract AtroposAutomatedContract is
     KeeperCompatibleInterface,
-    ChainlinkClient
+    ChainlinkClient,
+    IAtroposAutomatedContract
 {
     using SafeMath for uint256;
 
