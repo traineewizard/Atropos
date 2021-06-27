@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "./external/KeeperCompatibleInterface.sol";
@@ -8,6 +9,7 @@ import "./IAtroposAutomatedContractExecutor.sol";
 import "./IAtroposAutomatedContract.sol";
 
 contract AtroposAutomatedContract is
+    Ownable,
     KeeperCompatibleInterface,
     ChainlinkClient,
     IAtroposAutomatedContract
@@ -32,7 +34,6 @@ contract AtroposAutomatedContract is
     uint256 public _jobTriggers;
 
     constructor(
-        IAtroposAutomatedContractExecutor ethsignExecutor,
         bytes32 documentKey,
         uint256 jobStartBlock,
         uint256 jobEndBlock,
@@ -46,7 +47,6 @@ contract AtroposAutomatedContract is
         uint256 expectedResult
     ) public {
         setPublicChainlinkToken();
-        _atroposExecutor = ethsignExecutor;
         _documentKey = documentKey;
         _jobStartBlock = jobStartBlock;
         _jobLastRun = _jobStartBlock.sub(1);
@@ -61,6 +61,11 @@ contract AtroposAutomatedContract is
         _expectedResult = expectedResult;
         _responsePending = false;
         _jobTriggers = 0;
+    }
+
+    function setExecutor(IAtroposAutomatedContractExecutor atroposExecutor) external onlyOwner {
+        require(address(_atroposExecutor) == address(0), "Executor set");
+        _atroposExecutor = atroposExecutor;
     }
 
     function sendGetRequest() internal returns (bytes32 requestId) {
@@ -94,6 +99,7 @@ contract AtroposAutomatedContract is
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
+        require(address(_atroposExecutor) != address(0), "Executor not set");
         bool jobCanRun = (block.number > _jobStartBlock) &&
             (block.number < _jobEndBlock);
         bool jobShouldRun = (block.number.sub(_jobLastRun)) >= _jobInterval;
