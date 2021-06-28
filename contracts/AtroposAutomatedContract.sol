@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.0;
+pragma experimental ABIEncoderV2; // This is acceptable as it is used by default in Solidity 0.8.0.
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -24,13 +25,15 @@ contract AtroposAutomatedContract is
     bytes32 private _jobId;
     address private _oracle;
     uint256 private _fee;
-    string public _getRequest;
-    string public _path;
-    bytes32 public _expectedResult;
-    bool public _responsePending;
 
+    mapping(uint256 => string) public _urlMapping;
+    uint256 public _urlMappingCount;
+    uint256 public _urlMappingIndex;
+    mapping(uint256 => string) public _pathMapping;
+    mapping(uint256 => bytes32) public _expectedResultMapping;
+
+    bool public _responsePending;
     uint256 public _jobLastRun;
-    uint256 public _jobNumOfTriggers;
 
     constructor(
         uint256 jobStartBlock,
@@ -40,9 +43,9 @@ contract AtroposAutomatedContract is
         bytes32 jobId,
         address oracle,
         uint256 fee,
-        string memory getRequest,
-        string memory path,
-        bytes32 expectedResult
+        string[] memory urls,
+        string[] memory paths,
+        bytes32[] memory expectedResults
     ) public {
         setPublicChainlinkToken();
         _jobStartBlock = jobStartBlock;
@@ -53,11 +56,25 @@ contract AtroposAutomatedContract is
         _jobId = jobId;
         _oracle = oracle;
         _fee = 0.1 * 10**18;
-        _getRequest = getRequest;
-        _path = path;
-        _expectedResult = expectedResult;
+
+        require(
+            (urls.length == paths.length) &&
+                (paths.length == expectedResults.length),
+            "Bad url info"
+        );
+        _urlMappingCount = urls.length;
+        _urlMappingIndex = 0;
+        for (uint256 i = 0; i < urls.length; ++i) {
+            _urlMapping[i] = urls[i];
+        }
+        for (uint256 i = 0; i < paths.length; ++i) {
+            _pathMapping[i] = paths[i];
+        }
+        for (uint256 i = 0; i < expectedResults.length; ++i) {
+            _expectedResultMapping[i] = expectedResults[i];
+        }
+
         _responsePending = false;
-        _jobNumOfTriggers = 0;
     }
 
     // function setExecutor(IAtroposAutomatedContractExecutor atroposExecutor) external onlyOwner {
@@ -72,8 +89,8 @@ contract AtroposAutomatedContract is
             address(this),
             this.getCallback.selector
         );
-        request.add("get", _getRequest);
-        request.add("path", _path);
+        request.add("get", _urlMapping[_urlMappingIndex]);
+        request.add("path", _pathMapping[_urlMappingIndex]);
         _responsePending = true;
         return sendChainlinkRequestTo(_oracle, request, _fee);
     }
@@ -83,17 +100,14 @@ contract AtroposAutomatedContract is
         recordChainlinkFulfillment(requestId)
     {
         _responsePending = false;
-        emit AtroposResultReceived(_expectedResult, result);
-        if (result != _expectedResult) return;
-        if (
-            _jobExpectedTriggers > 0 &&
-            _jobNumOfTriggers >= _jobExpectedTriggers
-        ) {}
-        ++_jobNumOfTriggers;
-        emit AtroposExecutionTriggered(
-            address(_atroposExecutor),
-            _jobNumOfTriggers
+        emit AtroposResultReceived(
+            _expectedResultMapping[_urlMappingIndex],
+            result
         );
+        if (result != _expectedResultMapping[_urlMappingIndex]) return;
+        if (_urlMappingIndex == _urlMappingCount - 1) return;
+        ++_urlMappingIndex;
+        emit AtroposExecutionTriggered(address(_atroposExecutor));
         // _atroposExecutor.execute();
     }
 
