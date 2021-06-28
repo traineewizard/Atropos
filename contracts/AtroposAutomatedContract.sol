@@ -26,11 +26,10 @@ contract AtroposAutomatedContract is
     address private _oracle;
     uint256 private _fee;
 
-    mapping(uint256 => string) public _urlMapping;
-    uint256 public _urlMappingCount;
+    string[] public _urlMapping;
     uint256 public _urlMappingIndex;
-    mapping(uint256 => string) public _pathMapping;
-    mapping(uint256 => bytes32) public _expectedResultMapping;
+    string[] public _pathMapping;
+    bytes32[] public _expectedResultMapping;
 
     bool public _responsePending;
     uint256 public _jobLastRun;
@@ -62,7 +61,6 @@ contract AtroposAutomatedContract is
                 (paths.length == expectedResults.length),
             "Bad url info"
         );
-        _urlMappingCount = urls.length;
         _urlMappingIndex = 0;
         for (uint256 i = 0; i < urls.length; ++i) {
             _urlMapping[i] = urls[i];
@@ -105,7 +103,6 @@ contract AtroposAutomatedContract is
             result
         );
         if (result != _expectedResultMapping[_urlMappingIndex]) return;
-        if (_urlMappingIndex == _urlMappingCount - 1) return;
         ++_urlMappingIndex;
         emit AtroposExecutionTriggered(address(_atroposExecutor));
         // _atroposExecutor.execute();
