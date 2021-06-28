@@ -21,18 +21,6 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const fs = require('fs');
 const mnemonic = fs.readFileSync(".secret").toString().trim();
-const ContractKit = require('@celo/contractkit');
-const Web3 = require('web3');
-const wrapProvider = require('arb-ethers-web3-bridge').wrapProvider
-
-const web3 = new Web3('https://alfajores-forno.celo-testnet.org');
-const kit = ContractKit.newKitFromWeb3(web3);
-
-const celoAwaitWrapper = async () => {
-	kit.addAccount("");
-}
-
-// celoAwaitWrapper();
 
 module.exports = {
 	// contracts_build_directory: './react-app/src/artifacts',
@@ -106,16 +94,8 @@ module.exports = {
 			provider: () => new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/59e38e7a0505462d810e0ac606665fd1`),
 			gas: 5000000,
 			gasPrice: 25000000000,
-			network_id: 42
-		},
-		celo_alfajores: {
-			provider: kit.web3.currentProvider,
-			network_id: 44787
-		},
-		arbitrum_testnet: {
-			provider: () => wrapProvider(new HDWalletProvider(mnemonic, `https://rinkeby.arbitrum.io/rpc`)),
-			network_id: '*',
-			gasPrice: 0
+			network_id: 42,
+			skipDryRun: true
 		},
 		okex_testnet: {
 			provider: () => new HDWalletProvider(mnemonic, `https://exchaintestrpc.okex.org`),
@@ -170,7 +150,7 @@ module.exports = {
 	// Configure your compilers
 	compilers: {
 		solc: {
-			version: '0.8.0', // Fetch exact version from solc-bin (default: truffle's version)
+			version: '0.6.2', // Fetch exact version from solc-bin (default: truffle's version)
 			// docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
 			settings: {          // See the solidity docs for advice about optimization and evmVersion
 				optimizer: {
@@ -181,4 +161,12 @@ module.exports = {
 			}
 		},
 	},
+
+	api_keys: {
+		etherscan: "1EZ3964PC38FSFDJNI2WPF7RSFR1JGC92B"
+	},
+
+	plugins: [
+		'truffle-plugin-verify'
+	]
 };

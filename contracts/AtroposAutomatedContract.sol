@@ -17,7 +17,6 @@ contract AtroposAutomatedContract is
     using SafeMath for uint256;
 
     IAtroposAutomatedContractExecutor private _atroposExecutor;
-    bytes32 private _documentKey;
     uint256 public _jobStartBlock;
     uint256 public _jobEndBlock;
     uint256 public _jobInterval;
@@ -27,14 +26,13 @@ contract AtroposAutomatedContract is
     uint256 private _fee;
     string public _getRequest;
     string public _path;
-    uint256 public _expectedResult;
-    bool private _responsePending;
+    bytes32 public _expectedResult;
+    bool public _responsePending;
 
     uint256 public _jobLastRun;
-    uint256 public _jobTriggers;
+    uint256 public _jobNumOfTriggers;
 
     constructor(
-        bytes32 documentKey,
         uint256 jobStartBlock,
         uint256 jobEndBlock,
         uint256 jobInterval,
@@ -44,10 +42,9 @@ contract AtroposAutomatedContract is
         uint256 fee,
         string memory getRequest,
         string memory path,
-        uint256 expectedResult
+        bytes32 expectedResult
     ) public {
         setPublicChainlinkToken();
-        _documentKey = documentKey;
         _jobStartBlock = jobStartBlock;
         _jobLastRun = _jobStartBlock.sub(1);
         _jobEndBlock = jobEndBlock;
@@ -55,18 +52,18 @@ contract AtroposAutomatedContract is
         _jobExpectedTriggers = jobExpectedRuns;
         _jobId = jobId;
         _oracle = oracle;
-        _fee = fee;
+        _fee = 0.1 * 10**18;
         _getRequest = getRequest;
         _path = path;
         _expectedResult = expectedResult;
         _responsePending = false;
-        _jobTriggers = 0;
+        _jobNumOfTriggers = 0;
     }
 
-    function setExecutor(IAtroposAutomatedContractExecutor atroposExecutor) external onlyOwner {
-        require(address(_atroposExecutor) == address(0), "Executor set");
-        _atroposExecutor = atroposExecutor;
-    }
+    // function setExecutor(IAtroposAutomatedContractExecutor atroposExecutor) external onlyOwner {
+    //     require(address(_atroposExecutor) == address(0), "Executor set");
+    //     _atroposExecutor = atroposExecutor;
+    // }
 
     function sendGetRequest() internal returns (bytes32 requestId) {
         require(!_responsePending, "REQ_PENDING");
@@ -81,16 +78,23 @@ contract AtroposAutomatedContract is
         return sendChainlinkRequestTo(_oracle, request, _fee);
     }
 
-    function getCallback(bytes32 requestId, uint256 result)
+    function getCallback(bytes32 requestId, bytes32 result)
         public
         recordChainlinkFulfillment(requestId)
     {
         _responsePending = false;
+        emit AtroposResultReceived(_expectedResult, result);
         if (result != _expectedResult) return;
-        ++_jobTriggers;
-        if (_jobExpectedTriggers > 0 && _jobTriggers >= _jobExpectedTriggers)
-            return;
-        _atroposExecutor.execute();
+        if (
+            _jobExpectedTriggers > 0 &&
+            _jobNumOfTriggers >= _jobExpectedTriggers
+        ) {}
+        ++_jobNumOfTriggers;
+        emit AtroposExecutionTriggered(
+            address(_atroposExecutor),
+            _jobNumOfTriggers
+        );
+        // _atroposExecutor.execute();
     }
 
     function checkUpkeep(bytes calldata checkData)
@@ -99,7 +103,7 @@ contract AtroposAutomatedContract is
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        require(address(_atroposExecutor) != address(0), "Executor not set");
+        // require(address(_atroposExecutor) != address(0), "Executor not set");
         bool jobCanRun = (block.number > _jobStartBlock) &&
             (block.number < _jobEndBlock);
         bool jobShouldRun = (block.number.sub(_jobLastRun)) >= _jobInterval;
@@ -108,6 +112,7 @@ contract AtroposAutomatedContract is
     }
 
     function performUpkeep(bytes calldata performData) external override {
+        emit AtroposUpkeepPerformed();
         _jobLastRun = block.number;
         sendGetRequest();
     }
