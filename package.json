@@ -12,8 +12,12 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.3.1",
     "hardhat": "^2.4.0",
+    "patch-package": "^6.4.7",
     "truffle": "^5.3.11",
     "truffle-plugin-verify": "^0.5.9",
     "uuid": "^8.3.2"
+  },
+  "scripts": {
+    "postinstall": "patch-package"
   }
 }

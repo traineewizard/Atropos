@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "./external/KeeperCompatibleInterface.sol";
 import "./external/dai.sol";
+import "./external/ERC2771Context.sol";
 import "./IAtroposAutomatedContractExecutor.sol";
 import "./IAtroposAutomatedContract.sol";
 
@@ -15,8 +16,33 @@ contract AtroposAutomatedContract is
     Ownable,
     KeeperCompatibleInterface,
     ChainlinkClient,
-    IAtroposAutomatedContract
+    IAtroposAutomatedContract,
+    ERC2771Context
 {
+    function setTrustedForwarder(address _forwarder) external onlyOwner {
+        _trustedForwarder = _forwarder;
+    }
+
+    function _msgSender()
+        internal
+        view
+        virtual
+        override(Context, ERC2771Context)
+        returns (address payable sender)
+    {
+        return super._msgSender();
+    }
+
+    function _msgData()
+        internal
+        view
+        virtual
+        override(Context, ERC2771Context)
+        returns (bytes calldata)
+    {
+        return super._msgData();
+    }
+
     using SafeMath for uint256;
 
     // Kovan DAI
@@ -55,7 +81,7 @@ contract AtroposAutomatedContract is
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public {
+    ) public ERC2771Context(0xF82986F574803dfFd9609BE8b9c7B92f63a1410E) {
         setPublicChainlinkToken();
         _beneficiary = beneficiary;
         _jobStartBlock = block.number;

@@ -29,7 +29,9 @@ contract MockAtroposAutomatedContractExecutor is
         require(hasRole(ATROPOS_ROLE, _msgSender()));
         uint256 amount = _balance;
         _balance = 0;
-        _receiver.call.value(amount)("");
-        return true;
+        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+        (bool success, ) = _receiver.call{value: amount}("");
+        require(success, "Unable to send value");
+        return success;
     }
 }
