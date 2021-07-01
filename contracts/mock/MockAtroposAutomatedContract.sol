@@ -12,7 +12,7 @@ import "../external/ERC2771Context.sol";
 import "../IAtroposAutomatedContractExecutor.sol";
 import "../IAtroposAutomatedContract.sol";
 
-contract AtroposAutomatedContract is
+contract MockAtroposAutomatedContract is
     Ownable,
     KeeperCompatibleInterface,
     ChainlinkClient,
@@ -54,9 +54,9 @@ contract AtroposAutomatedContract is
 
     address public _beneficiary;
 
-    uint256 public _jobStartBlock;
-    uint256 public _expiration;
-    uint256 public _jobInterval;
+    uint256 public _jobStartTime;
+    uint256 public _expirationTime;
+    uint256 public _jobIntervalSeconds;
     bytes32 private _jobId;
     address private _oracle;
     uint256 private _fee;
@@ -79,7 +79,7 @@ contract AtroposAutomatedContract is
         uint256 totalRewards
     )
         public
-        // uint256 permitDeadline,
+        // uint256 permitDeadline, // a block number in the future
         // uint8 v,
         // bytes32 r,
         // bytes32 s
@@ -87,16 +87,16 @@ contract AtroposAutomatedContract is
     {
         setPublicChainlinkToken();
         _beneficiary = beneficiary;
-        _jobStartBlock = block.number;
-        _jobLastRun = _jobStartBlock.sub(1);
-        _expiration = expiration;
+        _jobStartTime = block.timestamp;
+        _jobLastRun = _jobStartTime.sub(1);
+        _expirationTime = expiration;
         _url = url;
         _milestones = milestones;
         _milestonesIndex = 0;
         _rewards = rewards;
         _path = "open_issues";
         _expectedResult = 0x0;
-        _jobInterval = 6 * 60 * 60; // 6 hours
+        _jobIntervalSeconds = 12 * 60 * 60; // 12 hours
         _jobId = "50fc4215f89443d185b061e5d7af9490";
         _oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
         _fee = 0.1 * 10**18;
@@ -118,14 +118,21 @@ contract AtroposAutomatedContract is
         //     s
         // );
         // _daiInstance.transferFrom(_msgSender(), address(this), totalRewards);
+        // uint256 linkNeededForUpkeepsBeforeExpiration = ((expiration -
+        //     block.timestamp) / _jobIntervalSeconds) * _fee;
+        // _linkInstance.transferFrom(
+        //     _msgSender(),
+        //     address(this),
+        //     linkNeededForUpkeepsBeforeExpiration
+        // );
     }
 
     function withdraw() external onlyOwner {
-        require(_expiration < block.timestamp, "Not expired");
+        require(_expirationTime < block.timestamp, "Not expired");
         uint256 remainingDai = _daiInstance.balanceOf(address(this));
-        _daiInstance.transfer(owner(), remainingDai);
+        // _daiInstance.transfer(owner(), remainingDai);
         uint256 remainingLink = _linkInstance.balanceOf(address(this));
-        _linkInstance.transfer(owner(), remainingLink);
+        // _linkInstance.transfer(owner(), remainingLink);
         emit AtroposFundsReclaimed(remainingDai, remainingLink);
     }
 
@@ -174,18 +181,21 @@ contract AtroposAutomatedContract is
         view
         returns (bool upkeepNeeded, bytes memory performData)
     {
-        bool jobCanRun = (block.number > _jobStartBlock) &&
-            (block.number < _expiration);
-        bool jobShouldRun = (block.number.sub(_jobLastRun)) >= _jobInterval;
+        bool jobCanRun = (block.timestamp > _jobStartTime) &&
+            (block.timestamp < _expirationTime);
+        bool jobShouldRun = (block.timestamp.sub(_jobLastRun)) >=
+            _jobIntervalSeconds;
         upkeepNeeded = jobCanRun && jobShouldRun;
         performData = checkData;
+        // debug
+        upkeepNeeded = true;
     }
 
     function performUpkeep(bytes calldata performData) external override {
         (bool upkeepNeeded, ) = _checkUpkeep("0");
         require(upkeepNeeded, "Should not upkeep");
         emit AtroposUpkeepPerformed();
-        _jobLastRun = block.number;
+        _jobLastRun = block.timestamp;
         sendGetRequest();
     }
 }
