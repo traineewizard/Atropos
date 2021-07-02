@@ -11,4 +11,5 @@ interface IAtroposAutomatedContract {
         uint256 dai
     );
     event AtroposFundsReclaimed(uint256 dai, uint256 link);
+    event AtroposJobCompleted();
 }

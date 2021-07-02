@@ -69,6 +69,7 @@ contract MockAtroposAutomatedContract is
     bytes32 public _expectedResult;
     bool public _responsePending;
     uint256 public _jobLastRun;
+    bool public _jobCompleted;
 
     constructor(
         uint256 expiration, // seconds since epoch
@@ -95,12 +96,13 @@ contract MockAtroposAutomatedContract is
         _milestonesIndex = 0;
         _rewards = rewards;
         _path = "open_issues";
-        _expectedResult = 0x0;
+        _expectedResult = 0x3000000000000000000000000000000000000000000000000000000000000000;
         _jobIntervalSeconds = 12 * 60 * 60; // 12 hours
         _jobId = "50fc4215f89443d185b061e5d7af9490";
         _oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
         _fee = 0.1 * 10**18;
         _responsePending = false;
+        _jobCompleted = false;
 
         uint256 calculatedTotalRewards = 0;
         for (uint256 i = 0; i < rewards.length; ++i) {
@@ -130,9 +132,9 @@ contract MockAtroposAutomatedContract is
     function withdraw() external onlyOwner {
         require(_expirationTime < block.timestamp, "Not expired");
         uint256 remainingDai = _daiInstance.balanceOf(address(this));
-        // _daiInstance.transfer(owner(), remainingDai);
+        _daiInstance.transfer(owner(), remainingDai);
         uint256 remainingLink = _linkInstance.balanceOf(address(this));
-        // _linkInstance.transfer(owner(), remainingLink);
+        _linkInstance.transfer(owner(), remainingLink);
         emit AtroposFundsReclaimed(remainingDai, remainingLink);
     }
 
@@ -143,8 +145,11 @@ contract MockAtroposAutomatedContract is
             address(this),
             this.getCallback.selector
         );
-        request.add("get", _url);
-        request.add("path", _milestones[_milestonesIndex]);
+        request.add(
+            "get",
+            string(abi.encodePacked(_url, _milestones[_milestonesIndex]))
+        );
+        request.add("path", _path);
         _responsePending = true;
         return sendChainlinkRequestTo(_oracle, request, _fee);
     }
@@ -158,18 +163,21 @@ contract MockAtroposAutomatedContract is
         if (result != _expectedResult) return;
         uint256 rewards = _rewards[_milestonesIndex];
         // _daiInstance.transfer(_beneficiary, rewards);
-        ++_milestonesIndex;
         emit AtroposExecutionTriggered(
             _url,
             _milestones[_milestonesIndex],
             _beneficiary,
             rewards
         );
+        ++_milestonesIndex;
+        if (_milestonesIndex == _milestones.length) {
+            _jobCompleted = true;
+            emit AtroposJobCompleted();
+        }
     }
 
     function checkUpkeep(bytes calldata checkData)
         external
-        view
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
@@ -189,6 +197,8 @@ contract MockAtroposAutomatedContract is
         performData = checkData;
         // debug
         upkeepNeeded = true;
+        if (_responsePending) upkeepNeeded = false;
+        if (_jobCompleted) upkeepNeeded = false;
     }
 
     function performUpkeep(bytes calldata performData) external override {
