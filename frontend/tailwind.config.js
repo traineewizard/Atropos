@@ -8,6 +8,8 @@ module.exports = {
         "title-blue": "#547BE0",
         "title-gray": " #7A7676",
         "divide-gray": "#E5E5E5",
+        "bg-gray": "#FAFAFA",
+        "bar-orange": "#E98234",
       },
     },
   },

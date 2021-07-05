@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import Web3 from "web3";
+import { useWallet } from "use-wallet";
 import GithubRepoConfig from "../components/GithubRepoConfig";
 import GithubRepoInfo from "../components/GithubRepoInfo";
 import SequenceLeftTitle from "../components/SequenceTitleLeft";
 import MileStoneRewardConfig from "../components/MileStoneRewardConfig";
 import CompleteConfig from "../components/CompleteConfig";
 import BeneficiaryConfig from "../components/BeneficiaryConfig";
+import { contractAbi } from "../utils/contractAbi";
+import { contractByteCode } from "../utils/contractByteCode";
+import { constFlag } from "../utils/constFlag";
 
-function MyProjectPage({ provider }) {
+function MyProjectPage({ provider, jumpPageCallback, contractDeployCallback }) {
   const [currStep, setCurrStep] = useState(1); // start from 1
+  const wallet = useWallet();
   const [repoUrl, setRepoUrl] = useState("");
   const [projectTitle, setProjectTitle] = useState("");
   const [duration, setDuration] = useState("");
@@ -43,7 +48,7 @@ function MyProjectPage({ provider }) {
     setDuration(res);
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     let milestoneIndexArray = [];
     let rewardArrayBn = [];
     let totalReward = 0;
@@ -78,16 +83,44 @@ function MyProjectPage({ provider }) {
         totalRewards: totalRewardBn,
       })
     );
-    alert(
-      JSON.stringify({
-        expiration: durationTimestamp,
-        beneficiary: beneficiary,
-        url: repoUrl,
-        milestones: milestoneIndexArray,
-        rewards: rewardArrayBn,
-        totalRewards: totalRewardBn,
+
+    let contractObj = new web3.eth.Contract(contractAbi);
+    await contractObj
+      .deploy({
+        data: contractByteCode,
+        arguments: [
+          durationTimestamp,
+          beneficiary,
+          repoUrl,
+          milestoneIndexArray,
+          rewardArrayBn,
+          totalRewardBn,
+        ],
       })
-    );
+      .send({ from: wallet.account })
+      .on("error", (error) => {
+        console.log(error);
+      })
+      .on("transactionHash", (transactionHash) => {
+        console.log(transactionHash);
+      })
+      .on("receipt", function (receipt) {
+        console.log(receipt.contractAddress); // contains the new contract address
+      })
+      .on("confirmation", (confirmationNumber, receipt) => {
+        console.log(confirmationNumber, receipt);
+      })
+      .then(function (newContractInstance) {
+        console.log(newContractInstance.options.address);
+
+        // instance with the new contract address
+        contractDeployCallback(
+          newContractInstance.options.address,
+          milestoneRewardArray,
+          duration
+        );
+        jumpPageCallback(constFlag.pageProjectDetail);
+      });
   };
 
   const handleSetMilestoneRewardArrayCallback = (res) => {

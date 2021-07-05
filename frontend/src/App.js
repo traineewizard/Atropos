@@ -2,14 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useWallet, UseWalletProvider } from "use-wallet";
 import MainPage from "./pages/MainPage";
 import MyProjectPage from "./pages/MyProjectPage";
-import ProjectPanel from "./pages/ProjectDashboard";
-
+import ProjectDashboard from "./pages/ProjectDashboard";
 import { constFlag } from "./utils/constFlag";
+import "./App.css";
 
 function App() {
   const wallet = useWallet();
   const [provider, setProvider] = useState(null);
-  const [currPage, setCurrPage] = useState(constFlag.pageMyProject);
+  const [currPage, setCurrPage] = useState(constFlag.pageMain);
+  const [contractAddress, setContractAddress] = useState("");
+  const [milestoneArray, setMilestoneArray] = useState([]);
+  const [duration, setDuration] = useState("");
 
   const handleConnectClick = () => {
     wallet.connect();
@@ -17,6 +20,16 @@ function App() {
 
   const handleDisconnectClick = () => {
     wallet.reset();
+  };
+
+  const handleContractDeploy = (
+    contractAddressIn,
+    milestoneArrayIn,
+    durationIn
+  ) => {
+    setContractAddress(contractAddressIn);
+    setMilestoneArray(milestoneArrayIn);
+    setDuration(durationIn);
   };
 
   const jumpPage = (page) => {
@@ -28,7 +41,7 @@ function App() {
   }, [wallet.status, wallet.ethereum]);
 
   return (
-    <div>
+    <div className="">
       <div className="grid grid-cols-3 items-center bg-nav-gray h-20">
         <div className="ml-20 text-xl">
           {currPage === constFlag.pageMyProject && "My Projects"}
@@ -60,7 +73,7 @@ function App() {
           </div>
         )}
       </div>
-      <div className="container mx-auto  mt-12 h-full">
+      <div className="container mx-auto  mt-12 h-full ">
         {wallet.status === "connected" ? (
           <>
             {currPage === constFlag.pageMain && (
@@ -70,11 +83,20 @@ function App() {
               ></MainPage>
             )}
             {currPage === constFlag.pageMyProject && (
-              <MyProjectPage provider={provider}></MyProjectPage>
+              <MyProjectPage
+                provider={provider}
+                contractDeployCallback={handleContractDeploy}
+                jumpPageCallback={jumpPage}
+              ></MyProjectPage>
             )}
 
             {currPage === constFlag.pageProjectDetail && (
-              <ProjectPanel></ProjectPanel>
+              <ProjectDashboard
+                provider={provider}
+                duration={duration}
+                milestoneArray={milestoneArray}
+                contractAddress={contractAddress}
+              ></ProjectDashboard>
             )}
           </>
         ) : (
@@ -94,7 +116,7 @@ const WalletApp = () => {
       connectors={{
         // This is how connectors get configured
         portis: {
-          dAppId: "",
+          dAppId: "w94NziX-ib9ENvp9J2mrgmMBoGcoEGDi",
         },
       }}
     >

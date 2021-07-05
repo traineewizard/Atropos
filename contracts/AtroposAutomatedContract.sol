@@ -47,7 +47,7 @@ contract AtroposAutomatedContract is
 
     // Kovan DAI
     Dai public constant _daiInstance =
-        Dai(0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa);
+        Dai(0xeDa98D6D3d22A41FBD8bc980c3c98d0585c61dA7);
     // Kovan LINK
     IERC20 public constant _linkInstance =
         IERC20(0xa36085F69e2889c224210F603D836748e7dC0088);
