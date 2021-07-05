@@ -2,7 +2,6 @@ Our Project hosts online at [https://atropos.netlify.app/](https://atropos.netli
 
 
 ## Overview
-s
 
 #### **Project Description**
 
