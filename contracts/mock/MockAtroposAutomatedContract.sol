@@ -6,13 +6,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
-import "./external/KeeperCompatibleInterface.sol";
-import "./external/dai.sol";
-import "./external/ERC2771Context.sol";
-import "./IAtroposAutomatedContractExecutor.sol";
-import "./IAtroposAutomatedContract.sol";
+import "../external/KeeperCompatibleInterface.sol";
+import "../external/dai.sol";
+import "../external/ERC2771Context.sol";
+import "../IAtroposAutomatedContractExecutor.sol";
+import "../IAtroposAutomatedContract.sol";
 
-contract AtroposAutomatedContract is
+contract MockAtroposAutomatedContract is
     Ownable,
     KeeperCompatibleInterface,
     ChainlinkClient,
@@ -56,19 +56,17 @@ contract AtroposAutomatedContract is
 
     uint256 public _jobStartTime;
     uint256 public _expirationTime;
-    uint256 public constant _jobIntervalSeconds = 12 * 60 * 60; // 12 hours
-    bytes32 private constant _jobId = "50fc4215f89443d185b061e5d7af9490";
-    address private constant _oracle =
-        0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
-    uint256 private constant _fee = 0.1 * 10**18;
+    uint256 public _jobIntervalSeconds;
+    bytes32 private _jobId;
+    address private _oracle;
+    uint256 private _fee;
 
     string public _url;
     string[] public _milestones;
     uint256 public _milestonesIndex;
     uint256[] public _rewards;
-    string public constant _path = "open_issues";
-    bytes32 public constant _expectedResult =
-        0x3000000000000000000000000000000000000000000000000000000000000000;
+    string public _path;
+    bytes32 public _expectedResult;
     bool public _responsePending;
     uint256 public _jobLastRun;
     bool public _jobCompleted;
@@ -80,7 +78,14 @@ contract AtroposAutomatedContract is
         string[] memory milestones,
         uint256[] memory rewards,
         uint256 totalRewards
-    ) public ERC2771Context(0xF82986F574803dfFd9609BE8b9c7B92f63a1410E) {
+    )
+        public
+        // uint256 permitDeadline, // a block number in the future
+        // uint8 v,
+        // bytes32 r,
+        // bytes32 s
+        ERC2771Context(0xF82986F574803dfFd9609BE8b9c7B92f63a1410E)
+    {
         setPublicChainlinkToken();
         _beneficiary = beneficiary;
         _jobStartTime = block.timestamp;
@@ -90,6 +95,12 @@ contract AtroposAutomatedContract is
         _milestones = milestones;
         _milestonesIndex = 0;
         _rewards = rewards;
+        _path = "open_issues";
+        _expectedResult = 0x3000000000000000000000000000000000000000000000000000000000000000;
+        _jobIntervalSeconds = 12 * 60 * 60; // 12 hours
+        _jobId = "50fc4215f89443d185b061e5d7af9490";
+        _oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
+        _fee = 0.1 * 10**18;
         _responsePending = false;
         _jobCompleted = false;
 
@@ -98,14 +109,24 @@ contract AtroposAutomatedContract is
             calculatedTotalRewards += rewards[i];
         }
         require(calculatedTotalRewards == totalRewards, "Reward mismatch");
-        _daiInstance.transferFrom(_msgSender(), address(this), totalRewards);
-        uint256 linkNeededForUpkeepsBeforeExpiration = ((expiration -
-            block.timestamp) / _jobIntervalSeconds) * _fee;
-        _linkInstance.transferFrom(
-            _msgSender(),
-            address(this),
-            linkNeededForUpkeepsBeforeExpiration
-        );
+        // _daiInstance.permit(
+        //     _msgSender(),
+        //     address(this),
+        //     _daiInstance.nonces(_msgSender()),
+        //     permitDeadline,
+        //     true,
+        //     v,
+        //     r,
+        //     s
+        // );
+        // _daiInstance.transferFrom(_msgSender(), address(this), totalRewards);
+        // uint256 linkNeededForUpkeepsBeforeExpiration = ((expiration -
+        //     block.timestamp) / _jobIntervalSeconds) * _fee;
+        // _linkInstance.transferFrom(
+        //     _msgSender(),
+        //     address(this),
+        //     linkNeededForUpkeepsBeforeExpiration
+        // );
     }
 
     function withdraw() external onlyOwner {
@@ -141,7 +162,7 @@ contract AtroposAutomatedContract is
         emit AtroposResultReceived(_expectedResult, result);
         if (result != _expectedResult) return;
         uint256 rewards = _rewards[_milestonesIndex];
-        _daiInstance.transfer(_beneficiary, rewards);
+        // _daiInstance.transfer(_beneficiary, rewards);
         emit AtroposExecutionTriggered(
             _url,
             _milestones[_milestonesIndex],
@@ -149,7 +170,7 @@ contract AtroposAutomatedContract is
             rewards
         );
         ++_milestonesIndex;
-        if (_milestonesIndex == _milestones.length - 1) {
+        if (_milestonesIndex == _milestones.length) {
             _jobCompleted = true;
             emit AtroposJobCompleted();
         }
@@ -174,6 +195,8 @@ contract AtroposAutomatedContract is
             _jobIntervalSeconds;
         upkeepNeeded = jobCanRun && jobShouldRun;
         performData = checkData;
+        // debug
+        upkeepNeeded = true;
         if (_responsePending) upkeepNeeded = false;
         if (_jobCompleted) upkeepNeeded = false;
     }
