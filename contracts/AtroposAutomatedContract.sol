@@ -12,6 +12,15 @@ import "./external/ERC2771Context.sol";
 import "./IAtroposAutomatedContractExecutor.sol";
 import "./IAtroposAutomatedContract.sol";
 
+
+/**
+ * @title AtroposAutomatedContract contract
+ * @dev Automated escrow contract that releases fund when pre-configured github milestone is done.
+ * Milestones and corresponding rewards is registered and transfered upon contract creation.
+ * Then Chainlink keeper will periodically call the Chainlink oracle to check if the next
+ * milestone is done. If so, the corresponding fund is released to a pre-configured receiver's address.
+ * @author Atropos Team
+ **/
 contract AtroposAutomatedContract is
     Ownable,
     KeeperCompatibleInterface,
@@ -19,10 +28,16 @@ contract AtroposAutomatedContract is
     IAtroposAutomatedContract,
     ERC2771Context
 {
+    /**
+    * @dev Biconomy gasless / stablcoin transaction related
+    **/
     function setTrustedForwarder(address _forwarder) external onlyOwner {
         _trustedForwarder = _forwarder;
     }
 
+    /**
+    * @dev Biconomy gasless / stablcoin transaction related
+    **/
     function _msgSender()
         internal
         view
@@ -33,6 +48,9 @@ contract AtroposAutomatedContract is
         return super._msgSender();
     }
 
+    /**
+    * @dev Biconomy gasless / stablcoin transaction related
+    **/
     function _msgData()
         internal
         view
@@ -73,6 +91,16 @@ contract AtroposAutomatedContract is
     uint256 public _jobLastRun;
     bool public _jobCompleted;
 
+    /**
+    * @dev Initialize a new escrow contract
+    * @param expiration The address of the underlying asset to deposit
+    * @param beneficiary Reciever of the fund when milestone is delivered
+    * @param url Prefix of the github hub milestone api
+    * @param milestones Milestone number array. Each concatenates with url is the corresponding
+    * Github api that Chainlink oracle is going to query
+    * @param rewards Rewards in dai of each milestone
+    * @param totalRewards Total rewards of dai if all the milestones are delivered. 
+    **/
     constructor(
         uint256 expiration, // seconds since epoch
         address beneficiary,
@@ -108,6 +136,11 @@ contract AtroposAutomatedContract is
         );
     }
 
+    /**
+    * @dev Either when some milestones expire or all milestones are done, 
+    * project can withdraw the remaining dai (in the case expiration)
+    * or link (in the case delivery in advance) from the contract
+    **/
     function withdraw() external onlyOwner {
         require(_expirationTime < block.timestamp, "Not expired");
         uint256 remainingDai = _daiInstance.balanceOf(address(this));
@@ -117,6 +150,10 @@ contract AtroposAutomatedContract is
         emit AtroposFundsReclaimed(remainingDai, remainingLink);
     }
 
+    /**
+    * @dev Internal function to send a http request to Chainlink network
+    * to check if a specific milestone is finished
+    **/
     function sendGetRequest() internal returns (bytes32 requestId) {
         require(!_responsePending, "REQ_PENDING");
         Chainlink.Request memory request = buildChainlinkRequest(
@@ -133,6 +170,10 @@ contract AtroposAutomatedContract is
         return sendChainlinkRequestTo(_oracle, request, _fee);
     }
 
+    /**
+    * @dev Chainlink network callback. If the corresponding
+    * milestone is finished, then release the fund
+    **/
     function getCallback(bytes32 requestId, bytes32 result)
         public
         recordChainlinkFulfillment(requestId)
@@ -155,6 +196,9 @@ contract AtroposAutomatedContract is
         }
     }
 
+    /**
+    * @dev If _jobIntervalSeconds is passed, schedule a keeper call
+    **/
     function checkUpkeep(bytes calldata checkData)
         external
         override
@@ -178,6 +222,12 @@ contract AtroposAutomatedContract is
         if (_jobCompleted) upkeepNeeded = false;
     }
 
+    /**
+    * @dev Entry point for Chainlink keeper
+    * If _jobIntervalSeconds is passed, schedule a keeper call
+    * to Chainlink network to query if the target milestone is
+    * finished
+    **/
     function performUpkeep(bytes calldata performData) external override {
         (bool upkeepNeeded, ) = _checkUpkeep("0");
         require(upkeepNeeded, "Should not upkeep");
