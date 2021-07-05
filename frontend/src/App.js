@@ -11,8 +11,12 @@ function App() {
   const [provider, setProvider] = useState(null);
   const [currPage, setCurrPage] = useState(constFlag.pageMain);
   const [contractAddress, setContractAddress] = useState("");
-  const [milestoneArray, setMilestoneArray] = useState([]);
-  const [duration, setDuration] = useState("");
+  const [milestoneArray, setMilestoneArray] = useState([
+    { title: "Test", description: "", issue: 0, reward: 0 },
+    { title: "Test2", description: "", issue: 0, reward: 0 },
+    { title: "Test3", description: "", issue: 0, reward: 0 },
+  ]);
+  const [duration, setDuration] = useState("20210720");
 
   const handleConnectClick = () => {
     wallet.connect();

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Milestoneitem from "../components/MileStoneItem";
+import MilestoneDetail from "../components/MilestoneDetail";
 import { useInterval } from "../utils/useInterval";
 import { useWallet } from "use-wallet";
 import Web3 from "web3";
@@ -14,28 +14,35 @@ function ProjectDashboard({
   const wallet = useWallet();
   const [milestoneArrayProgress, setMilestoneArrayProgress] = useState([]);
   const [milestoneArrayDone, setMilestoneArrayDone] = useState([]);
+
   useInterval(async () => {
-    if ((provider, wallet.account, contractAddress)) {
+    //0x29481dB9073409f308431f6ae5678649385ED80a
+
+    if (provider && wallet.account) {
       let web3 = new Web3(provider);
       let contractInstance = new web3.eth.Contract(
         contractAbi,
         contractAddress
       );
 
-      await contractInstance.methods._milestonesIndex.call().then((res) => {
-        console.log(res);
-        let _milestoneArrayProgress = [];
-        let _milestoneArrayDone = [];
-        milestoneArray.forEach((item, index) => {
-          if (index < parseInt(res)) {
-            _milestoneArrayProgress.push(item);
-          } else {
-            _milestoneArrayDone.push(item);
-          }
+      console.log(milestoneArray);
+      await contractInstance.methods
+        ._milestonesIndex()
+        .call()
+        .then((res) => {
+          console.log("index: ", res);
+          let _milestoneArrayProgress = [];
+          let _milestoneArrayDone = [];
+          milestoneArray.forEach((item, index) => {
+            if (index >= parseInt(res)) {
+              _milestoneArrayProgress.push(item);
+            } else {
+              _milestoneArrayDone.push(item);
+            }
+          });
+          setMilestoneArrayProgress(_milestoneArrayProgress);
+          setMilestoneArrayDone(_milestoneArrayDone);
         });
-        setMilestoneArrayProgress(milestoneArrayProgress);
-        setMilestoneArrayDone(milestoneArrayDone);
-      });
     }
   }, 1500);
   return (
@@ -44,25 +51,26 @@ function ProjectDashboard({
       <div className="text-xl text-title-blue font-bold py-4">
         Project Delivery Date: {duration}
       </div>
+      <div>Smart contract address: {contractAddress}</div>
       <div className="grid grid-cols-3">
         <div>
           <div className="text-xl font-medium py-5">In Progress</div>
           {milestoneArrayProgress.map((milestone, index) => (
-            <Milestoneitem
+            <MilestoneDetail
               milestone={milestone}
               duration={duration}
               index={index}
-            ></Milestoneitem>
+            ></MilestoneDetail>
           ))}
         </div>
         <div>
           <div className="text-xl font-medium py-5">Done</div>
           {milestoneArrayDone.map((milestone, index) => (
-            <Milestoneitem
+            <MilestoneDetail
               milestone={milestone}
               duration={duration}
               index={index}
-            ></Milestoneitem>
+            ></MilestoneDetail>
           ))}
         </div>
         <div>

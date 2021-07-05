@@ -7,6 +7,7 @@ function MilestoneDetail({ milestone, duration, index }) {
         <div className="font-bold">Milestone #{index}</div>
         <div className="text-title-blue font-bold">Due Date: {duration}</div>
       </div>
+      <div>{milestone && milestone.title}</div>
 
       <div>{milestone && milestone.descriptiion}</div>
       <div className="bg-bar-orange h-2 rounded mt-5"></div>

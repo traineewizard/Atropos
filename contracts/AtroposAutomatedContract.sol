@@ -98,14 +98,14 @@ contract AtroposAutomatedContract is
             calculatedTotalRewards += rewards[i];
         }
         require(calculatedTotalRewards == totalRewards, "Reward mismatch");
-        _daiInstance.transferFrom(_msgSender(), address(this), totalRewards);
+        //_daiInstance.transferFrom(_msgSender(), address(this), totalRewards);
         uint256 linkNeededForUpkeepsBeforeExpiration = ((expiration -
             block.timestamp) / _jobIntervalSeconds) * _fee;
-        _linkInstance.transferFrom(
-            _msgSender(),
-            address(this),
-            linkNeededForUpkeepsBeforeExpiration
-        );
+        //_linkInstance.transferFrom(
+        //    _msgSender(),
+        //    address(this),
+        //    linkNeededForUpkeepsBeforeExpiration
+        //);
     }
 
     function withdraw() external onlyOwner {
@@ -180,7 +180,7 @@ contract AtroposAutomatedContract is
 
     function performUpkeep(bytes calldata performData) external override {
         (bool upkeepNeeded, ) = _checkUpkeep("0");
-        require(upkeepNeeded, "Should not upkeep");
+        //require(upkeepNeeded, "Should not upkeep");
         emit AtroposUpkeepPerformed();
         _jobLastRun = block.timestamp;
         sendGetRequest();
