@@ -6,12 +6,22 @@ function MileStoneRewardConfig({
   backCallback,
   nextCallback,
   milestoneRewardArray,
-  milestoneReardCallback,
+  milestoneRewardCallback,
 }) {
   const [milestoneRewardArrayConfiged, setMilestoneRewardArrayConfig] =
     useState(milestoneRewardArray);
-  const handleMilestoneRewardArrayChange = (event) => {
-    console.log(event);
+
+  const handleMilestoneRewardArrayChange = (index, milestoneReward) => {
+    setMilestoneRewardArrayConfig(() => {
+      let _milestoneRewardArrayConfiged = milestoneRewardArrayConfiged;
+      _milestoneRewardArrayConfiged[index] = milestoneReward;
+      return _milestoneRewardArrayConfiged;
+    });
+  };
+
+  const handleNextClick = () => {
+    milestoneRewardCallback(milestoneRewardArrayConfiged);
+    nextCallback();
   };
 
   useEffect(() => {
@@ -27,7 +37,7 @@ function MileStoneRewardConfig({
                 key={i}
                 index={i + 1}
                 milestoneReward={milestoneReward}
-                milestoneReardCallback={milestoneReardCallback}
+                milestoneRewardCallback={handleMilestoneRewardArrayChange}
               ></MilestoneRewardItemConfig>
             ))}
 
@@ -42,7 +52,7 @@ function MileStoneRewardConfig({
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white  w-32 py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={nextCallback}
+              onClick={handleNextClick}
             >
               Next
             </button>

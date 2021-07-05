@@ -1,35 +1,36 @@
 import React from "react";
 import MilestoneRewardItemView from "./MilestoneRewards/MilestoneRewardItemView";
 
-function CompleteConfig({ step, backCallback, compelteCallback, beneficiary }) {
+function CompleteConfig({
+  step,
+  projectTile,
+  duration,
+  beneficiary,
+  milestoneRewardArray,
+  backCallback,
+  compelteCallback,
+}) {
   return (
     <>
       {step === 5 && (
         <div>
-          <div className="block font-bold  text-xl mb-4" htmlFor="url">
+          <div className="block font-bold  text-xl mb-2" htmlFor="url">
             Project Title:
           </div>
-          <MilestoneRewardItemView
-            title="Milestone #1 Test"
-            description="Test milestone"
-            reward={100}
-            issue={0}
-          ></MilestoneRewardItemView>
-          <MilestoneRewardItemView
-            title="Milestone #2 Test"
-            description="This is a paragraph of Milestone descripton pulled from Github Repo."
-            reward={110}
-            issue={0}
-          ></MilestoneRewardItemView>
-          <MilestoneRewardItemView
-            title="Milestone #3 Milestone Sample Name"
-            description="This is a paragraph of Milestone descripton pulled from Github Repo."
-            reward={120}
-            issue={0}
-          ></MilestoneRewardItemView>
-          <div>Beneficiary</div>
+          <div className="mb-5">{projectTile}</div>
+          <div className="font-bold">Duration</div>
+          <div className="mb-10">{duration}</div>
+          {milestoneRewardArray.length > 0 &&
+            milestoneRewardArray.map((milestone, index) => (
+              <MilestoneRewardItemView
+                key={index}
+                milestone={milestone}
+              ></MilestoneRewardItemView>
+            ))}
+
+          <div className="font-bold">Beneficiary</div>
           <div>{beneficiary}</div>
-          <div className="flex items-center justify-end mt-10">
+          <div className="flex items-center justify-end mt-10  mb-10">
             <button
               className="bg-gray-500 hover:bg-gray-700 text-white  w-32 py-2 px-4 mr-5 rounded focus:outline-none focus:shadow-outline"
               type="button"

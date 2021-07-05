@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useWallet, UseWalletProvider } from "use-wallet";
 import MainPage from "./pages/MainPage";
 import MyProjectPage from "./pages/MyProjectPage";
@@ -33,7 +33,7 @@ function App() {
           {currPage === constFlag.pageMyProject && "My Projects"}
         </div>
         <div className="grid justify-items-center">
-          <img className="h-12" src="/atropos.png"></img>
+          <img alt="logo" className="h-12" src="/atropos.png"></img>
         </div>
 
         {wallet.status === "connected" ? (

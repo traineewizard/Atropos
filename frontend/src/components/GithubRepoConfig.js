@@ -1,12 +1,18 @@
 import React, { useState } from "react";
 
-function GithubRepoConfig({ step, nextCallback }) {
+function GithubRepoConfig({ step, repoUrlCallback, nextCallback }) {
   const [githubRepoUrl, setGithubRepoUrl] = useState("");
 
   const handleGithubRepoChange = (event) => {
     console.log(event.target.value);
     setGithubRepoUrl(event.target.value);
   };
+
+  const handleNextClick = () => {
+    repoUrlCallback(githubRepoUrl);
+    nextCallback();
+  };
+
   return (
     <>
       {step === 1 && (
@@ -26,7 +32,7 @@ function GithubRepoConfig({ step, nextCallback }) {
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white  w-32 py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={nextCallback}
+              onClick={handleNextClick}
             >
               Next
             </button>

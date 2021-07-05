@@ -8,9 +8,11 @@ import CompleteConfig from "../components/CompleteConfig";
 import BeneficiaryConfig from "../components/BeneficiaryConfig";
 
 function MyProjectPage() {
-  const [currStep, setCurrStep] = useState(2); // start from 1
+  const [currStep, setCurrStep] = useState(1); // start from 1
+  const [repoUrl, setRepoUrl] = useState("");
+  const [projectTitle, setProjectTitle] = useState("");
+  const [duration, setDuration] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
-
   const [milestoneRewardArray, setMilestoneRewardArray] = useState([]); //  [{ title: "", issue: 0, reward: 0 }, { title: "", issue: 0, reward: 0 }, ...]
   const handleBackClick = () => {
     setCurrStep(() => {
@@ -24,12 +26,49 @@ function MyProjectPage() {
     });
   };
 
+  const handleSetRepoUrl = (res) => {
+    setRepoUrl(res);
+  };
+
+  const handleSetProjectTitle = (res) => {
+    setProjectTitle(res);
+  };
+
   const handleSetBneneficiary = (res) => {
     setBeneficiary(res);
   };
 
+  const handeSetDuration = (res) => {
+    setDuration(res);
+  };
+
   const handleComplete = () => {
-    alert("complete click");
+    let milestoneTitleArray = [];
+    let rewardArray = [];
+    let totalReward = 0;
+    milestoneRewardArray.forEach((item) => {
+      milestoneTitleArray.push(item.title);
+      rewardArray.push(item.reward);
+      totalReward = totalReward + parseFloat(item.reward);
+    });
+    console.log(
+      duration,
+      beneficiary,
+      repoUrl,
+      milestoneTitleArray,
+      rewardArray,
+      totalReward
+    );
+    alert(
+      JSON.stringify({
+        expiration: duration,
+        beneficiary: beneficiary,
+        url: repoUrl,
+        milestones: milestoneTitleArray,
+        rewards: rewardArray,
+        totalRewards: totalReward,
+      })
+    );
   };
 
   const handleSetMilestoneRewardArrayCallback = (res) => {
@@ -52,20 +91,23 @@ function MyProjectPage() {
           <div className="pt-20 pl-20 col-span-2">
             <GithubRepoConfig
               step={currStep}
+              repoUrlCallback={handleSetRepoUrl}
               nextCallback={handleNextClick}
             ></GithubRepoConfig>
             <GithubRepoInfo
               step={currStep}
               backCallback={handleBackClick}
               nextCallback={handleNextClick}
-              milestoneReardCallback={handleSetMilestoneRewardArrayCallback}
+              projectTitleCallback={handleSetProjectTitle}
+              durationCallback={handeSetDuration}
+              milestoneRewardCallback={handleSetMilestoneRewardArrayCallback}
             ></GithubRepoInfo>
             <MileStoneRewardConfig
               step={currStep}
               backCallback={handleBackClick}
               nextCallback={handleNextClick}
               milestoneRewardArray={milestoneRewardArray}
-              milestoneReardCallback={handleSetMilestoneRewardArrayCallback}
+              milestoneRewardCallback={handleSetMilestoneRewardArrayCallback}
             ></MileStoneRewardConfig>
             <BeneficiaryConfig
               step={currStep}
@@ -75,6 +117,8 @@ function MyProjectPage() {
             ></BeneficiaryConfig>
             <CompleteConfig
               step={currStep}
+              projectTile={projectTitle}
+              duration={duration}
               milestoneRewardArray={milestoneRewardArray}
               beneficiary={beneficiary}
               backCallback={handleBackClick}

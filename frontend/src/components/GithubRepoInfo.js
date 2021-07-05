@@ -2,25 +2,38 @@ import React, { useEffect, useState } from "react";
 
 function GithubRepoInfo({
   step,
-  milestoneReardCallback,
+  durationCallback,
+  projectTitleCallback,
+  milestoneRewardCallback,
   backCallback,
   nextCallback,
 }) {
   const [projectTitle, setProjectTitle] = useState("");
   const [duration, setDuration] = useState("");
+  const [milestoneArray, setMiltstoneArray] = useState([]);
 
   const handleDurationChange = (event) => {
     setDuration(event.target.value);
   };
 
+  const handleNextClick = () => {
+    projectTitleCallback(projectTitle);
+    milestoneRewardCallback(milestoneArray);
+    durationCallback(duration);
+    nextCallback();
+  };
+
   useEffect(() => {
-    setProjectTitle("EthSign-3.0-API"); // TODO, parse project title from github RESTful api
+    // TODO, parse project title from github RESTful api
+    setProjectTitle("EthSign-3.0-API");
+
+    // TODO, parse milestones from github RESTful api
     let awaitMiltstoneArray = [
-      { title: "Test", issue: 0, reward: 0 },
-      { title: "Test2", issue: 0, reward: 0 },
-      { title: "Test3", issue: 0, reward: 0 },
-    ]; // TODO, parse milestones from github RESTful api
-    milestoneReardCallback(awaitMiltstoneArray);
+      { title: "Test", description: "", issue: 0, reward: 0 },
+      { title: "Test2", description: "", issue: 0, reward: 0 },
+      { title: "Test3", description: "", issue: 0, reward: 0 },
+    ];
+    setMiltstoneArray(awaitMiltstoneArray);
   }, []);
 
   return (
@@ -32,7 +45,7 @@ function GithubRepoInfo({
           </label>
           <div className="mb-5">{projectTitle}</div>
 
-          <label className="block text-xl mb-4 font-bold" htmlFor="url">
+          <label className="block text-medium mb-4 font-bold" htmlFor="url">
             Duration Config:
           </label>
           <input
@@ -54,7 +67,7 @@ function GithubRepoInfo({
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white  w-32 py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={nextCallback}
+              onClick={handleNextClick}
             >
               Next
             </button>
