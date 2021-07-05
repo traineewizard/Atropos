@@ -53,7 +53,7 @@ function GithubRepoInfo({
             id="date"
             type="text"
             value={duration}
-            placeholder="Project duration config"
+            placeholder="year-month-day"
             onChange={handleDurationChange}
           ></input>
           <div className="flex items-center justify-end mt-10">

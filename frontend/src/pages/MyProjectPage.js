@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-
+import React, { useState } from "react";
+import Web3 from "web3";
 import GithubRepoConfig from "../components/GithubRepoConfig";
 import GithubRepoInfo from "../components/GithubRepoInfo";
 import SequenceLeftTitle from "../components/SequenceTitleLeft";
@@ -7,13 +7,14 @@ import MileStoneRewardConfig from "../components/MileStoneRewardConfig";
 import CompleteConfig from "../components/CompleteConfig";
 import BeneficiaryConfig from "../components/BeneficiaryConfig";
 
-function MyProjectPage() {
+function MyProjectPage({ provider }) {
   const [currStep, setCurrStep] = useState(1); // start from 1
   const [repoUrl, setRepoUrl] = useState("");
   const [projectTitle, setProjectTitle] = useState("");
   const [duration, setDuration] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
   const [milestoneRewardArray, setMilestoneRewardArray] = useState([]); //  [{ title: "", issue: 0, reward: 0 }, { title: "", issue: 0, reward: 0 }, ...]
+
   const handleBackClick = () => {
     setCurrStep(() => {
       return currStep - 1;
@@ -43,36 +44,53 @@ function MyProjectPage() {
   };
 
   const handleComplete = () => {
-    let milestoneTitleArray = [];
-    let rewardArray = [];
+    let milestoneIndexArray = [];
+    let rewardArrayBn = [];
     let totalReward = 0;
-    milestoneRewardArray.forEach((item) => {
-      milestoneTitleArray.push(item.title);
-      rewardArray.push(item.reward);
+    let totalRewardBn;
+    let durationTimestamp;
+    let web3 = new Web3(provider);
+
+    milestoneRewardArray.forEach((item, index) => {
+      milestoneIndexArray.push(index);
+      rewardArrayBn.push(web3.utils.toWei(item.reward.toString(), "ether"));
       totalReward = totalReward + parseFloat(item.reward);
     });
+    totalRewardBn = web3.utils.toWei(totalReward.toString(), "ether");
+
+    let dateArray = duration.toString().split("-");
+    let dateInMileSecond = new Date(
+      dateArray[0],
+      dateArray[1] - 1,
+      dateArray[2]
+    );
+    durationTimestamp = parseFloat(
+      dateInMileSecond.getTime() / 1000
+    ).toString();
+
     console.log(
-      duration,
-      beneficiary,
-      repoUrl,
-      milestoneTitleArray,
-      rewardArray,
-      totalReward
+      JSON.stringify({
+        expiration: durationTimestamp,
+        beneficiary: beneficiary,
+        url: repoUrl,
+        milestones: milestoneIndexArray,
+        rewards: rewardArrayBn,
+        totalRewards: totalRewardBn,
+      })
     );
     alert(
       JSON.stringify({
-        expiration: duration,
+        expiration: durationTimestamp,
         beneficiary: beneficiary,
         url: repoUrl,
-        milestones: milestoneTitleArray,
-        rewards: rewardArray,
-        totalRewards: totalReward,
+        milestones: milestoneIndexArray,
+        rewards: rewardArrayBn,
+        totalRewards: totalRewardBn,
       })
     );
   };
 
   const handleSetMilestoneRewardArrayCallback = (res) => {
-    console.log(res);
     setMilestoneRewardArray(res);
   };
 

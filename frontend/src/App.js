@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useWallet, UseWalletProvider } from "use-wallet";
 import MainPage from "./pages/MainPage";
 import MyProjectPage from "./pages/MyProjectPage";
+import ProjectPanel from "./pages/ProjectDashboard";
 
 import { constFlag } from "./utils/constFlag";
 
 function App() {
   const wallet = useWallet();
   const [provider, setProvider] = useState(null);
-  const [currPage, setCurrPage] = useState(constFlag.pageMain);
+  const [currPage, setCurrPage] = useState(constFlag.pageMyProject);
 
   const handleConnectClick = () => {
     wallet.connect();
@@ -69,7 +70,11 @@ function App() {
               ></MainPage>
             )}
             {currPage === constFlag.pageMyProject && (
-              <MyProjectPage></MyProjectPage>
+              <MyProjectPage provider={provider}></MyProjectPage>
+            )}
+
+            {currPage === constFlag.pageProjectDetail && (
+              <ProjectPanel></ProjectPanel>
             )}
           </>
         ) : (
@@ -85,7 +90,7 @@ function App() {
 const WalletApp = () => {
   return (
     <UseWalletProvider
-      chainId={(1, 3)}
+      chainId={(1, 42)}
       connectors={{
         // This is how connectors get configured
         portis: {

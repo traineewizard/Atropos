@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 function MilestoneRewardItemConfig({
   index,
@@ -13,9 +13,7 @@ function MilestoneRewardItemConfig({
       reward: event.target.value,
     });
   };
-  useEffect(() => {
-    console.log(index, milestoneReward);
-  }, []);
+
   return (
     <>
       <div className="flex mb-4 justify-between">
